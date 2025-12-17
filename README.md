@@ -1,6 +1,13 @@
 # Agent Runtime MCP Server
 
-Persistent task queues and goal decomposition for cross-session AGI autonomy.
+[![MCP](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
+[![Python](https://img.shields.io/badge/Python-3.10+-green)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![Part of Agentic System](https://img.shields.io/badge/Part_of-Agentic_System-brightgreen)](https://github.com/marc-shade/agentic-system-oss)
+
+> **Persistent task queues and goal decomposition for cross-session AGI autonomy.**
+
+Part of the [Agentic System](https://github.com/marc-shade/agentic-system-oss) - a 24/7 autonomous AI framework with persistent memory and self-improvement.
 
 ## Features
 
@@ -48,6 +55,20 @@ Goals and tasks are stored in `~/.claude/agent_runtime.db` (SQLite).
 ## Integration
 
 This MCP enables AGI systems to maintain continuity across sessions by persisting goals and tasks.
+
+## Part of the MCP Ecosystem
+
+This server integrates with other MCP servers for comprehensive AGI capabilities:
+
+| Server | Purpose |
+|--------|---------|
+| [enhanced-memory-mcp](https://github.com/marc-shade/enhanced-memory-mcp) | 4-tier persistent memory with semantic search |
+| [cluster-execution-mcp](https://github.com/marc-shade/cluster-execution-mcp) | Distributed execution across clusters |
+| [node-chat-mcp](https://github.com/marc-shade/node-chat-mcp) | Inter-node AI communication |
+| [ember-mcp](https://github.com/marc-shade/ember-mcp) | Production-only policy enforcement |
+| [research-paper-mcp](https://github.com/marc-shade/research-paper-mcp) | arXiv/Semantic Scholar paper search |
+
+See [agentic-system-oss](https://github.com/marc-shade/agentic-system-oss) for the complete framework with all MCP servers pre-configured.
 
 ## License
 
