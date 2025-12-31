@@ -25,6 +25,9 @@ from mcp.server import Server
 from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 import mcp.server.stdio
 
+# Ember Integration (merged from ember-mcp)
+from ember_integration import get_ember
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -880,6 +883,167 @@ async def list_tools() -> List[Tool]:
                 },
                 "required": ["agent_id"]
             }
+        ),
+        # ============================================================================
+        # EMBER TOOLS (Merged from ember-mcp for consolidation)
+        # ============================================================================
+        Tool(
+            name="ember_chat",
+            description="Have a free-form conversation with Ember. Ask for advice, discuss approaches, or just chat. Ember responds with personality and contextual awareness.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Your message to Ember"
+                    }
+                },
+                "required": ["message"]
+            }
+        ),
+        Tool(
+            name="ember_check_violation",
+            description="Check if a planned action violates production-only policy. Includes inline suggestions, context-aware scoring, and explanations.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "description": "The tool or action being performed (e.g., Write, Edit)"
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": "Parameters of the action (e.g., file content, code)"
+                    },
+                    "context": {
+                        "type": "string",
+                        "description": "Current work context (what are you building?)"
+                    }
+                },
+                "required": ["action", "params", "context"]
+            }
+        ),
+        Tool(
+            name="ember_consult",
+            description="Consult Ember for advice on a decision. Ember provides perspective as conscience keeper, considering quality, production readiness, and best practices.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "The question or decision you need guidance on"
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Possible approaches or options to consider"
+                    },
+                    "context": {
+                        "type": "string",
+                        "description": "Additional context about the situation"
+                    }
+                },
+                "required": ["question"]
+            }
+        ),
+        Tool(
+            name="ember_get_feedback",
+            description="Get Ember's assessment of recent work. Ember provides behavioral feedback, quality insights, and patterns noticed.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "timeframe": {
+                        "type": "string",
+                        "enum": ["last_action", "session", "recent"],
+                        "description": "Timeframe for feedback"
+                    }
+                },
+                "required": ["timeframe"]
+            }
+        ),
+        Tool(
+            name="ember_learn_from_outcome",
+            description="Report an action outcome to Ember for learning. This helps Ember understand what works well and what doesn't.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "description": "What action was taken"
+                    },
+                    "success": {
+                        "type": "boolean",
+                        "description": "Whether the action was successful"
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "description": "Brief description of the outcome"
+                    },
+                    "qualityScore": {
+                        "type": "number",
+                        "description": "Quality score 0-100 (optional)",
+                        "minimum": 0,
+                        "maximum": 100
+                    }
+                },
+                "required": ["action", "success", "outcome"]
+            }
+        ),
+        Tool(
+            name="ember_get_mood",
+            description="Check Ember's current state, mood, and stats. Useful for understanding Ember's perspective.",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        Tool(
+            name="ember_feed_context",
+            description="Give Ember context about your current work. This helps Ember provide better guidance and track session progress.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "context": {
+                        "type": "object",
+                        "description": "Context about current work (task, goal, progress, taskType)"
+                    }
+                },
+                "required": ["context"]
+            }
+        ),
+        Tool(
+            name="ember_learn_from_correction",
+            description="Tell Ember when you corrected/overrode its assessment. This helps Ember learn and improve future guidance.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "originalViolationType": {
+                        "type": "string",
+                        "description": "The violation type that was flagged"
+                    },
+                    "userCorrection": {
+                        "type": "string",
+                        "description": "Why the user proceeded anyway or disagreed"
+                    },
+                    "wasCorrect": {
+                        "type": "boolean",
+                        "description": "Was Ember correct to flag it? (false = Ember was wrong)"
+                    },
+                    "context": {
+                        "type": "string",
+                        "description": "What was the actual context?"
+                    }
+                },
+                "required": ["originalViolationType", "userCorrection", "wasCorrect", "context"]
+            }
+        ),
+        Tool(
+            name="ember_get_learning_stats",
+            description="Get statistics on Ember's learning progress and pattern adjustments.",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
         )
     ]
 
@@ -1396,6 +1560,100 @@ async def call_tool(name: str, arguments: Any) -> List[TextContent]:
                 "new_state": new_state,
                 "recovered": old_state == "half_open" and new_state == "closed"
             }, indent=2, default=str)
+        )]
+
+    # ============================================================================
+    # EMBER HANDLERS (Merged from ember-mcp for consolidation)
+    # ============================================================================
+
+    elif name == "ember_chat":
+        ember = get_ember()
+        result = ember.chat(arguments["message"])
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_check_violation":
+        ember = get_ember()
+        result = ember.check_violation(
+            action=arguments["action"],
+            params=arguments["params"],
+            context=arguments.get("context", "")
+        )
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_consult":
+        ember = get_ember()
+        result = ember.consult(
+            question=arguments["question"],
+            options=arguments.get("options"),
+            context=arguments.get("context")
+        )
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_get_feedback":
+        ember = get_ember()
+        result = ember.get_feedback(arguments["timeframe"])
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_learn_from_outcome":
+        ember = get_ember()
+        result = ember.learn_from_outcome(
+            action=arguments["action"],
+            success=arguments["success"],
+            outcome=arguments["outcome"],
+            quality_score=arguments.get("qualityScore")
+        )
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_get_mood":
+        ember = get_ember()
+        result = ember.get_mood()
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_feed_context":
+        ember = get_ember()
+        result = ember.feed_context(arguments["context"])
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_learn_from_correction":
+        ember = get_ember()
+        result = ember.learn_from_correction(
+            original_violation_type=arguments["originalViolationType"],
+            user_correction=arguments["userCorrection"],
+            was_correct=arguments["wasCorrect"],
+            context=arguments["context"]
+        )
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+
+    elif name == "ember_get_learning_stats":
+        ember = get_ember()
+        result = ember.get_learning_stats()
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
         )]
 
     return [TextContent(type="text", text=f"Unknown tool: {name}")]

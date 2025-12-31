@@ -11,23 +11,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install ruff
-      - run: ruff check . --output-format=github || true
-      - run: ruff format --check . || true
+
+      - name: Install linting tools
+        run: pip install ruff
+
+      - name: Run Ruff linter
+        run: ruff check . --output-format=github || true
+
+      - name: Run Ruff formatter check
+        run: ruff format --check . || true
 
   security:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install bandit pip-audit
-      - run: bandit -r . -x ./tests,./.venv,./node_modules -ll || true
-      - run: |
+
+      - name: Install security tools
+        run: pip install bandit pip-audit
+
+      - name: Run Bandit security scan
+        run: bandit -r . -x ./tests,./.venv,./node_modules -ll || true
+
+      - name: Check dependencies for vulnerabilities
+        run: |
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
             pip-audit --strict || true
@@ -37,11 +53,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: |
+
+      - name: Install dependencies
+        run: |
           pip install mypy
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - run: |
-          if [ -f server.py ]; then mypy server.py --ignore-missing-imports || true; fi
+
+      - name: Run type checking
+        run: |
+          if [ -f server.py ]; then
+            mypy server.py --ignore-missing-imports || true
+          fi
